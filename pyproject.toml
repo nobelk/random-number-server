@@ -9,3 +9,6 @@ dependencies = [
     "mcp[cli]>=1.9.4",
     "requests>=2.32.4",
 ]
+
+[tool.setuptools]
+py-modules = []

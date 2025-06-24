@@ -6,7 +6,7 @@ MCP server to generate random numbers using the national weather data as seeds.
 ## Run the MCP server
 
 ```bash
-uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/weather run weather.py
+uv --directory /ABSOLUTE/PATH/TO/PARENT/FOLDER/random-number-server run random_server.py
 ```
 
 ## Run claude desktop by customizing the following configuration
