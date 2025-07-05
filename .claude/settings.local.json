@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python:*)",
+      "Bash(docker build:*)",
+      "Bash(docker:*)",
+      "Bash(uv sync:*)"
+    ],
+    "deny": []
+  }
+}
