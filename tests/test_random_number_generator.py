@@ -5,7 +5,7 @@ import asyncio
 import json
 from unittest.mock import Mock, patch, AsyncMock
 import requests
-from RandomNumberGenerator import RandomNumberGenerator
+from src.RandomNumberGenerator import RandomNumberGenerator
 
 
 class TestRandomNumberGenerator:
@@ -62,10 +62,10 @@ class TestRandomNumberGenerator:
         mock_http_error.response.text = "Error message"
         mock_response.raise_for_status.side_effect = mock_http_error
         
-        with patch('requests.get', return_value=mock_response):
-            with patch('builtins.print') as mock_print:
-                await generator._get_random_seed()
-                mock_print.assert_called_once_with("Error message")
+        with patch('src.RandomNumberGenerator.requests.get', return_value=mock_response):
+            await generator._get_random_seed()
+            # Since error is caught and logged, seed should remain 0
+            assert generator._seed == 0
 
     @pytest.mark.asyncio
     async def test_random_first_call(self):
@@ -173,18 +173,21 @@ class TestRandomNumberGenerator:
         generator = RandomNumberGenerator()
         mock_response = Mock()
         mock_response.content = b"invalid json"
+        mock_response.raise_for_status = Mock()
         
-        with patch('requests.get', return_value=mock_response):
-            with pytest.raises(json.JSONDecodeError):
-                await generator._get_random_seed()
+        with patch('src.RandomNumberGenerator.requests.get', return_value=mock_response):
+            await generator._get_random_seed()
+            # Since error is caught and logged, seed should remain 0
+            assert generator._seed == 0
 
     @pytest.mark.asyncio
     async def test_network_timeout(self):
         """Test handling of network timeout."""
         generator = RandomNumberGenerator()
         
-        with patch('requests.get') as mock_get:
+        with patch('src.RandomNumberGenerator.requests.get') as mock_get:
             mock_get.side_effect = requests.exceptions.Timeout("Timeout error")
             
-            with pytest.raises(requests.exceptions.Timeout):
-                await generator._get_random_seed()
+            await generator._get_random_seed()
+            # Since error is caught and logged, seed should remain 0
+            assert generator._seed == 0

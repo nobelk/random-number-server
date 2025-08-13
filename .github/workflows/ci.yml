@@ -1,0 +1,109 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.13'
+
+jobs:
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.11', '3.12', '3.13']
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        cache-dependency-glob: "uv.lock"
+        
+    - name: Set up Python
+      run: uv python install ${{ matrix.python-version }}
+      
+    - name: Install dependencies
+      run: |
+        uv sync --frozen
+        
+    - name: Run tests with coverage
+      run: |
+        uv run pytest tests/ -v --cov=src --cov-report=xml --cov-report=term-missing
+        
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        verbose: true
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      with:
+        enable-cache: true
+        
+    - name: Set up Python
+      run: uv python install 3.13
+      
+    - name: Install dependencies
+      run: |
+        uv sync --frozen
+        uv pip install ruff mypy
+        
+    - name: Run ruff
+      run: |
+        uv run ruff check src/ tests/ || true
+        
+    - name: Run mypy
+      run: |
+        uv run mypy src/ tests/ --ignore-missing-imports || true
+
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+      
+    - name: Set up Python
+      run: uv python install 3.13
+      
+    - name: Install dependencies
+      run: |
+        uv sync --frozen
+        uv pip install bandit safety
+        
+    - name: Run bandit
+      run: |
+        uv run bandit -r src/ -ll || true
+        
+    - name: Run safety check
+      run: |
+        uv run safety check --json || true

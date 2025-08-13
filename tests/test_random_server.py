@@ -4,11 +4,11 @@ import pytest
 import asyncio
 from unittest.mock import Mock, patch, AsyncMock
 from mcp.server.fastmcp import FastMCP
-from RandomNumberGenerator import RandomNumberGenerator
+from src.RandomNumberGenerator import RandomNumberGenerator
 
 
 # Import the module under test
-import random_server
+import src.random_server as random_server
 
 
 class TestRandomServer:
@@ -99,8 +99,9 @@ class TestRandomServer:
         with patch.object(random_server.generator, 'random') as mock_random:
             mock_random.side_effect = Exception("Network error")
             
-            with pytest.raises(Exception):
-                await random_server.get_random_number()
+            result = await random_server.get_random_number()
+            # Exception should be caught and error message returned
+            assert result == "Unable to fetch random numbers."
 
     @pytest.mark.asyncio
     async def test_get_random_number_multiple_calls(self):

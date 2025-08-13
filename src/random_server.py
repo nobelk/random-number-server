@@ -3,7 +3,7 @@ import httpx
 import logging
 from mcp.server.fastmcp import FastMCP
 
-from RandomNumberGenerator import RandomNumberGenerator
+from src.RandomNumberGenerator import RandomNumberGenerator
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
