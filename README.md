@@ -3,7 +3,7 @@
 [![CI](https://github.com/nobelk/random-number-server/actions/workflows/ci.yml/badge.svg)](https://github.com/nobelk/random-number-server/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/nobelk/random-number-server/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/nobelk/random-number-server)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
 MCP server to generate random numbers using the national weather data as seeds.
 
