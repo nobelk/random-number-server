@@ -10,7 +10,8 @@
       "Bash(timeout 2 docker run --rm random-number-server:test)",
       "Bash(/dev/null)",
       "Bash(mkdir:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }

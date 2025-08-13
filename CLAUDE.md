@@ -117,3 +117,17 @@ The server is configured to work with Claude Desktop. Add to `~/Library/Applicat
   }
 }
 ```
+
+## GitHub Actions CI/CD
+
+The project uses GitHub Actions for continuous integration with the following workflow:
+
+### CI Workflow (.github/workflows/ci.yml)
+The CI workflow runs on push and pull requests to main/master/develop branches and includes:
+
+- **Testing**: Runs pytest with coverage across Python 3.11, 3.12, and 3.13 on Ubuntu, macOS, and Windows
+- **Code Coverage**: Uploads coverage reports to Codecov (86% coverage)
+- **Linting**: Runs ruff and mypy for code quality checks
+- **Security Scanning**: Runs bandit and safety for security vulnerability detection
+
+The workflow ensures code quality and compatibility across multiple Python versions and operating systems.
