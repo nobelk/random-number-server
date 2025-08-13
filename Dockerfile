@@ -1,76 +1,83 @@
-# Use a Python image with uv pre-installed
-FROM ghcr.io/astral-sh/uv:python-3.10-alpine AS uv
+# Build stage with uv
+FROM ghcr.io/astral-sh/uv:python3.13-alpine AS builder
 
 # Add metadata
 LABEL maintainer="Nobel Khandaker" \
       version="0.1.0" \
       description="Random Number Server using MCP"
 
-# Install the project in '/app' dir
+# Set working directory
 WORKDIR /app
 
-# Enable bytecode compilation
+# Enable bytecode compilation for better performance
 ENV UV_COMPILE_BYTECODE=1
 
-# Copy from the cache instead of linking since we have the mounted volume
+# Copy from the cache instead of linking since we're building for deployment
 ENV UV_LINK_MODE=copy
 
-# Generate TOML lockfile first
-RUN --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=README.md,target=README.md \
-    uv lock
+# Install system dependencies if needed
+RUN apk add --no-cache gcc musl-dev
 
-# Install the project dependencies
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    uv sync --frozen --no-install-project --no-dev --no-editable
+# Copy dependency files first for better caching
+COPY pyproject.toml README.md ./
 
-# Copy application source code
-COPY --chown=root:root *.py /app/
-COPY --chown=root:root pyproject.toml /app/
-RUN --mount=type=cache,target=/root/.cache/uv \
-    --mount=type=bind,source=uv.lock,target=uv.lock \
-    uv sync --frozen --no-dev --no-editable
+# Generate lockfile and install dependencies
+RUN uv lock && \
+    uv sync --frozen --no-install-project --no-dev
 
-# Remove unnecessary files from the virtual environment before copying
-RUN find /app/.venv -name '__pycache__' -type d -exec rm -fr {} + && \
-    find /app/.venv -name '*.pyc' -delete && \
-    find /app/.venv -name '*.pyo' -delete && \
-    echo "Cleanup completed .venv"
+# Copy source code
+COPY src/ ./src/
 
-# Final Stage
-FROM python:3.10-alpine
+# Install the project itself
+RUN uv sync --frozen --no-dev
 
-# Update package manager for security
-RUN apk update && apk upgrade
+# Remove unnecessary files to reduce size
+RUN find /app/.venv -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true && \
+    find /app/.venv -type f -name '*.pyc' -delete && \
+    find /app/.venv -type f -name '*.pyo' -delete && \
+    find /app/.venv -type d -name 'tests' -exec rm -rf {} + 2>/dev/null || true && \
+    find /app/.venv -type d -name 'test' -exec rm -rf {} + 2>/dev/null || true && \
+    rm -rf /app/.venv/lib/python*/site-packages/*.dist-info/RECORD && \
+    rm -rf /app/.venv/lib/python*/site-packages/*.dist-info/INSTALLER
 
-# Create a non-root user
+# Final stage - minimal runtime image
+FROM python:3.13-alpine
+
+# Install runtime dependencies
+RUN apk add --no-cache libgcc
+
+# Create non-root user for security
 RUN adduser -D -h /home/app -s /bin/sh app
+
+# Set working directory
 WORKDIR /app
 
-# Copy the virtual environment and application code from the previous stage
-COPY --from=uv --chown=app:app /app/.venv /app/.venv
-COPY --from=uv --chown=app:app /app/*.py /app/
-COPY --from=uv --chown=app:app /app/pyproject.toml /app/
+# Copy virtual environment from builder
+COPY --from=builder --chown=app:app /app/.venv /app/.venv
+
+# Copy source code from builder
+COPY --from=builder --chown=app:app /app/src /app/src
+COPY --from=builder --chown=app:app /app/pyproject.toml /app/pyproject.toml
+COPY --from=builder --chown=app:app /app/uv.lock /app/uv.lock
+
+# Install uv in the final image for running the application
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Switch to non-root user
 USER app
 
-# Place executable scripts in PATH
-ENV PATH="/app/.venv/bin:$PATH"
-
 # Set environment variables
-ENV PYTHONPATH=/app
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONPATH="/app"
 ENV PYTHONUNBUFFERED=1
+ENV UV_PYTHON="/app/.venv/bin/python"
 ENV LOG_LEVEL=INFO
 
-# Expose port (if needed for future HTTP endpoints)
-EXPOSE 8000
+# Note: Health check removed as MCP servers run continuously through stdio
+# and standard health checks would interfere with the server's operation
 
-# Add health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import random_server; print('Server module loaded successfully')" || exit 1
+# Use uv to run the server
+ENTRYPOINT ["uv", "run", "--frozen", "src/random_server.py"]
 
-# Use proper entrypoint
-ENTRYPOINT ["python", "/app/random_server.py"]
+# Alternative: Direct Python execution (uncomment if preferred)
+# ENTRYPOINT ["/app/.venv/bin/python", "-m", "src.random_server"]

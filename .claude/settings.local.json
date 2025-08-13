@@ -4,7 +4,13 @@
       "Bash(python:*)",
       "Bash(docker build:*)",
       "Bash(docker:*)",
-      "Bash(uv sync:*)"
+      "Bash(uv sync:*)",
+      "Bash(uv run:*)",
+      "Bash(uv pip install:*)",
+      "Bash(timeout 2 docker run --rm random-number-server:test)",
+      "Bash(/dev/null)",
+      "Bash(mkdir:*)",
+      "Bash(tree:*)"
     ],
     "deny": []
   }

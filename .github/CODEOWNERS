@@ -1,0 +1,25 @@
+# Code Owners for automatic review requests
+# Each line is a file pattern followed by one or more owners
+
+# Default owners for everything in the repo
+* @nobelk
+
+# Python source code
+/src/ @nobelk
+/tests/ @nobelk
+
+# Configuration files
+*.yml @nobelk
+*.yaml @nobelk
+*.toml @nobelk
+
+# Docker files
+Dockerfile @nobelk
+docker-compose*.yml @nobelk
+
+# Documentation
+*.md @nobelk
+/docs/ @nobelk
+
+# GitHub specific files
+/.github/ @nobelk

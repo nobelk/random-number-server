@@ -1,0 +1,74 @@
+services:
+  random-server:
+    # Build configuration
+    build:
+      context: .
+      dockerfile: Dockerfile
+    
+    # Image name
+    image: random-number-server:latest
+    
+    # Container name
+    container_name: random-number-mcp-server
+    
+    # Restart policy
+    restart: unless-stopped
+    
+    # Environment variables
+    environment:
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - PYTHONUNBUFFERED=1
+    
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    
+    # Logging configuration
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
+    # Run as non-root user (matches Dockerfile)
+    user: app
+    
+    # Working directory
+    working_dir: /app
+    
+    # Network mode for MCP stdio communication
+    # Using host network for better stdio performance
+    stdin_open: true
+    tty: true
+    
+    # Volume mounts (optional - for development)
+    volumes:
+      # Mount source code for development (comment out for production)
+      # - ./src:/app/src:ro
+      # - ./pyproject.toml:/app/pyproject.toml:ro
+      # - ./uv.lock:/app/uv.lock:ro
+      
+      # Named volume for logs (optional)
+      - mcp-logs:/app/logs
+    
+    # Labels for metadata
+    labels:
+      - "com.example.description=Random Number MCP Server"
+      - "com.example.version=0.1.0"
+      - "com.example.maintainer=Nobel Khandaker"
+
+# Named volumes
+volumes:
+  mcp-logs:
+    driver: local
+
+# Networks (using default bridge network)
+networks:
+  default:
+    driver: bridge
