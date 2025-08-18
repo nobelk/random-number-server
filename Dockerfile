@@ -41,7 +41,7 @@ RUN find /app/.venv -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null ||
     rm -rf /app/.venv/lib/python*/site-packages/*.dist-info/INSTALLER
 
 # Final stage - minimal runtime image
-FROM python:3.13-alpine
+FROM python:3.13.7-alpine
 
 # Install runtime dependencies
 RUN apk add --no-cache libgcc
